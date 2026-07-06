@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Astro Blaster</title>
+  <meta name="description" content="Astro Blaster — a fast, retro-style space shooter built with vanilla HTML5 Canvas and JavaScript.">
+  <meta name="theme-color" content="#05060f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="wrap">
+    <canvas id="game" aria-label="Astro Blaster game area"></canvas>
+
+    <div class="controls">
+      <button id="btn-pause" class="icon-btn" aria-label="Pause game" title="Pause (P)">II</button>
+      <button id="btn-mute" class="icon-btn" aria-label="Toggle sound" title="Sound (M)">&#9835;</button>
+    </div>
+
+    <!-- Start screen -->
+    <section id="screen-start" class="screen visible">
+      <h1>ASTRO<br><span>BLASTER</span></h1>
+      <p class="tag">Defend the galaxy. Survive the waves.</p>
+      <button class="btn" data-action="start">START</button>
+
+      <ul class="help">
+        <li><kbd>&larr;</kbd><kbd>&rarr;</kbd> or <kbd>WASD</kbd> Move</li>
+        <li><kbd>Space</kbd> Shoot</li>
+        <li><kbd>P</kbd> Pause &middot; <kbd>M</kbd> Sound</li>
+        <li class="touch-tip">Touch: drag to move, auto-fire</li>
+      </ul>
+
+      <div class="legend">
+        <span><i style="--c:#4ecbff">3</i>Triple</span>
+        <span><i style="--c:#ffe066">R</i>Rapid</span>
+        <span><i style="--c:#7fffb2">S</i>Shield</span>
+        <span><i style="--c:#ff5e7a">+</i>Life</span>
+      </div>
+
+      <p class="best">BEST <b id="best-start">0</b></p>
+    </section>
+
+    <!-- Pause screen -->
+    <section id="screen-pause" class="screen">
+      <h2>PAUSED</h2>
+      <button class="btn" data-action="resume">RESUME</button>
+      <button class="btn ghost" data-action="menu">MAIN MENU</button>
+    </section>
+
+    <!-- Game over screen -->
+    <section id="screen-over" class="screen">
+      <h2 class="danger">GAME OVER</h2>
+      <p id="new-best" class="new-best">NEW HIGH SCORE!</p>
+      <div class="stats">
+        <p>SCORE <b id="final-score">0</b></p>
+        <p>LEVEL <b id="final-level">1</b></p>
+        <p>BEST <b id="final-best">0</b></p>
+      </div>
+      <button class="btn" data-action="start">PLAY AGAIN</button>
+      <button class="btn ghost" data-action="menu">MAIN MENU</button>
+    </section>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
