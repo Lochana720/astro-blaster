@@ -136,4 +136,20 @@
     updateMuteButton();
   }
   updateMuteButton();
+
+  // ---------------------------------------------------------------------------
+  // Background
+  // ---------------------------------------------------------------------------
+  const stars = Array.from({ length: 100 }, () => {
+    const s = rand(0.5, 2.2);
+    return { x: rand(0, W), y: rand(0, H), s, v: s * 45 };
+  });
+
+  const bgGradient = ctx.createLinearGradient(0, 0, 0, H);
+  bgGradient.addColorStop(0, '#070a1f');
+  bgGradient.addColorStop(1, '#05060f');
+
+  const nebula = ctx.createRadialGradient(W * 0.25, H * 0.3, 10, W * 0.25, H * 0.3, W);
+  nebula.addColorStop(0, 'rgba(199,125,255,0.10)');
+  nebula.addColorStop(1, 'rgba(199,125,255,0)');
 })();
