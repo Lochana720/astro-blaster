@@ -152,4 +152,38 @@
   const nebula = ctx.createRadialGradient(W * 0.25, H * 0.3, 10, W * 0.25, H * 0.3, W);
   nebula.addColorStop(0, 'rgba(199,125,255,0.10)');
   nebula.addColorStop(1, 'rgba(199,125,255,0)');
+
+  // ---------------------------------------------------------------------------
+  // Game data
+  // ---------------------------------------------------------------------------
+  const ENEMY_TYPES = {
+    scout: { r: 13, hp: 1, speed: 120, color: '#4ef0c8', score: 100, fire: 0 },
+    fighter: { r: 16, hp: 2, speed: 85, color: '#ffb347', score: 200, fire: 0.6 },
+    tank: { r: 24, hp: 6, speed: 50, color: '#ff5e7a', score: 500, fire: 0.4 },
+  };
+
+  const POWERUPS = {
+    triple: { color: '#4ecbff', label: '3', name: 'TRIPLE SHOT', time: 10 },
+    rapid: { color: '#ffe066', label: 'R', name: 'RAPID FIRE', time: 8 },
+    shield: { color: '#7fffb2', label: 'S', name: 'SHIELD', time: 8 },
+    life: { color: '#ff5e7a', label: '+', name: '1 UP', time: 0 },
+  };
+
+  const MAX_LIVES = 5;
+
+  let state = 'menu'; // menu | playing | paused | over
+  let player = null;
+  let bullets = [];
+  let enemies = [];
+  let particles = [];
+  let powerups = [];
+  let floaters = [];
+  let score = 0;
+  let level = 0;
+  let spawnLeft = 0;
+  let spawnTimer = 0;
+  let bannerText = '';
+  let bannerTimer = 0;
+  let shake = 0;
+  let boss = null;
 })();
