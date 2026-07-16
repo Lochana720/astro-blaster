@@ -186,4 +186,70 @@
   let bannerTimer = 0;
   let shake = 0;
   let boss = null;
+
+  // ---------------------------------------------------------------------------
+  // Input
+  // ---------------------------------------------------------------------------
+  const keys = { left: false, right: false, up: false, down: false, fire: false };
+  const keyMap = {
+    ArrowLeft: 'left', KeyA: 'left',
+    ArrowRight: 'right', KeyD: 'right',
+    ArrowUp: 'up', KeyW: 'up',
+    ArrowDown: 'down', KeyS: 'down',
+    Space: 'fire',
+  };
+  const pointer = { active: false, x: 0, y: 0 };
+
+  window.addEventListener('keydown', (e) => {
+    const k = keyMap[e.code];
+    if (k) {
+      keys[k] = true;
+      e.preventDefault();
+    }
+    if ((e.code === 'Enter' || e.code === 'Space') && (state === 'menu' || state === 'over') && !e.repeat) {
+      startGame();
+    }
+    if (e.code === 'KeyP' || e.code === 'Escape') togglePause();
+    if (e.code === 'KeyM') toggleMute();
+  });
+
+  window.addEventListener('keyup', (e) => {
+    const k = keyMap[e.code];
+    if (k) keys[k] = false;
+  });
+
+  window.addEventListener('blur', () => {
+    Object.keys(keys).forEach((k) => (keys[k] = false));
+    pointer.active = false;
+    if (state === 'playing') togglePause();
+  });
+
+  function toCanvas(e) {
+    const r = canvas.getBoundingClientRect();
+    return { x: ((e.clientX - r.left) * W) / r.width, y: ((e.clientY - r.top) * H) / r.height };
+  }
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (state !== 'playing') return;
+    pointer.active = true;
+    Object.assign(pointer, toCanvas(e));
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (pointer.active) Object.assign(pointer, toCanvas(e));
+  });
+  const endPointer = () => (pointer.active = false);
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+
+  document.querySelectorAll('[data-action]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      if (action === 'start') startGame();
+      if (action === 'resume') togglePause();
+      if (action === 'menu') showMenu();
+    });
+  });
+  el.mute.addEventListener('click', toggleMute);
+  el.pause.addEventListener('click', togglePause);
 })();
