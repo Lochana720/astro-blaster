@@ -252,4 +252,90 @@
   });
   el.mute.addEventListener('click', toggleMute);
   el.pause.addEventListener('click', togglePause);
+
+  // ---------------------------------------------------------------------------
+  // Game flow
+  // ---------------------------------------------------------------------------
+  function showScreen(name) {
+    Object.entries(screens).forEach(([key, node]) => node.classList.toggle('visible', key === name));
+  }
+
+  function resetGame() {
+    player = {
+      x: W / 2, y: H - 90, r: 16, speed: 380, cd: 0,
+      lives: 3, shield: 0, triple: 0, rapid: 0, invuln: 2,
+    };
+    bullets = [];
+    enemies = [];
+    particles = [];
+    powerups = [];
+    floaters = [];
+    score = 0;
+    level = 0;
+    shake = 0;
+    boss = null;
+    nextLevel();
+  }
+
+  function startGame() {
+    ensureAudio();
+    resetGame();
+    state = 'playing';
+    showScreen(null);
+  }
+
+  function showMenu() {
+    state = 'menu';
+    el.bestStart.textContent = best;
+    showScreen('start');
+  }
+
+  function togglePause() {
+    if (state === 'playing') {
+      state = 'paused';
+      pointer.active = false;
+      showScreen('pause');
+    } else if (state === 'paused') {
+      state = 'playing';
+      showScreen(null);
+    }
+  }
+
+  function gameOver() {
+    state = 'over';
+    const isNewBest = score > best;
+    if (isNewBest) {
+      best = score;
+      storage.set(BEST_KEY, best);
+    }
+    el.finalScore.textContent = score;
+    el.finalLevel.textContent = level;
+    el.finalBest.textContent = best;
+    el.newBest.classList.toggle('show', isNewBest);
+    setTimeout(() => {
+      if (state === 'over') showScreen('over');
+    }, 900);
+  }
+
+  function nextLevel() {
+    level++;
+    boss = null;
+    spawnTimer = 1.5;
+    if (level % 5 === 0) {
+      spawnLeft = 0;
+      boss = makeBoss();
+      enemies.push(boss);
+      showBanner(`BOSS LEVEL ${level}`);
+      sfx.boss();
+    } else {
+      spawnLeft = 8 + level * 4;
+      showBanner(`LEVEL ${level}`);
+      if (level > 1) sfx.level();
+    }
+  }
+
+  function showBanner(text) {
+    bannerText = text;
+    bannerTimer = 2;
+  }
 })();
