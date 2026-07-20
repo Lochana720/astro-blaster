@@ -338,4 +338,42 @@
     bannerText = text;
     bannerTimer = 2;
   }
+
+  // ---------------------------------------------------------------------------
+  // Spawning
+  // ---------------------------------------------------------------------------
+  function spawnEnemy() {
+    const roll = Math.random();
+    let type = 'scout';
+    if (level >= 2 && roll < 0.35) type = 'fighter';
+    if (level >= 3 && roll < 0.12) type = 'tank';
+
+    const t = ENEMY_TYPES[type];
+    const mul = 1 + (level - 1) * 0.06;
+    const hp = t.hp + Math.floor((level - 1) / 4);
+    const x = rand(t.r + 10, W - t.r - 10);
+
+    enemies.push({
+      type, x, baseX: x, y: -t.r * 2, r: t.r,
+      hp, maxHp: hp, speed: t.speed * mul, color: t.color, score: t.score,
+      fire: t.fire * mul, fireCd: rand(0.8, 2.5), phase: rand(0, Math.PI * 2),
+      t: 0, flash: 0, dead: false,
+    });
+  }
+
+  function makeBoss() {
+    const hp = 60 + level * 12;
+    return {
+      type: 'boss', x: W / 2, y: -90, r: 46, hp, maxHp: hp,
+      color: '#c77dff', score: 5000 + level * 500,
+      fireCd: 1.5, pattern: 0, t: 0, flash: 0, entering: true, dead: false,
+    };
+  }
+
+  function dropPowerup(x, y) {
+    const types = Object.keys(POWERUPS);
+    let type = types[Math.floor(Math.random() * types.length)];
+    if (type === 'life' && (player.lives >= MAX_LIVES || Math.random() < 0.5)) type = 'shield';
+    powerups.push({ x, y, r: 12, type, t: 0, dead: false });
+  }
 })();
