@@ -376,4 +376,110 @@
     if (type === 'life' && (player.lives >= MAX_LIVES || Math.random() < 0.5)) type = 'shield';
     powerups.push({ x, y, r: 12, type, t: 0, dead: false });
   }
+
+  // ---------------------------------------------------------------------------
+  // Combat
+  // ---------------------------------------------------------------------------
+  function playerShoot() {
+    const angles = player.triple > 0 ? [-0.18, 0, 0.18] : [0];
+    for (const a of angles) {
+      bullets.push({
+        x: player.x + Math.sin(a) * 6, y: player.y - 20,
+        vx: Math.sin(a) * 640, vy: -Math.cos(a) * 640,
+        r: 4, enemy: false, dead: false,
+      });
+    }
+    player.cd = player.rapid > 0 ? 0.09 : 0.18;
+    sfx.shoot();
+  }
+
+  // Angle is measured from "straight down": vx = sin(a), vy = cos(a)
+  function enemyBullet(x, y, angle, speed) {
+    bullets.push({
+      x, y, vx: Math.sin(angle) * speed, vy: Math.cos(angle) * speed,
+      r: 5, enemy: true, dead: false,
+    });
+  }
+
+  function aimAt(e) {
+    return Math.atan2(player.x - e.x, player.y - e.y);
+  }
+
+  function enemyShoot(e) {
+    if (e.type === 'tank') {
+      for (const a of [-0.3, 0, 0.3]) enemyBullet(e.x, e.y + e.r, a, 210);
+    } else {
+      enemyBullet(e.x, e.y + e.r, aimAt(e), 240);
+    }
+  }
+
+  function bossFire(e) {
+    e.pattern++;
+    if (e.pattern % 3 === 0) {
+      const n = 14;
+      for (let i = 0; i < n; i++) enemyBullet(e.x, e.y, (i / n) * Math.PI * 2 + e.t, 170);
+    } else {
+      const a = aimAt(e);
+      for (const d of [-0.25, 0, 0.25]) enemyBullet(e.x, e.y + e.r * 0.6, a + d, 260);
+    }
+  }
+
+  function damageEnemy(e, dmg) {
+    if (e.dead) return;
+    e.hp -= dmg;
+    e.flash = 0.08;
+    if (e.hp > 0) {
+      sfx.hit();
+      return;
+    }
+    e.dead = true;
+    score += e.score;
+    addFloater(`+${e.score}`, e.x, e.y, e.color);
+
+    if (e.type === 'boss') {
+      explode(e.x, e.y, e.color, 140, 360);
+      explode(e.x, e.y, '#ffffff', 60, 220);
+      shake = 22;
+      sfx.bigBoom();
+      for (let i = 0; i < 3; i++) dropPowerup(e.x + (i - 1) * 40, e.y);
+    } else {
+      explode(e.x, e.y, e.color, Math.round(e.r * 1.6));
+      sfx.boom();
+      if (Math.random() < 0.12) dropPowerup(e.x, e.y);
+    }
+  }
+
+  function hurtPlayer() {
+    if (player.invuln > 0 || player.lives <= 0) return;
+
+    if (player.shield > 0) {
+      player.shield = 0;
+      player.invuln = 0.6;
+      explode(player.x, player.y, POWERUPS.shield.color, 24);
+      sfx.shieldBreak();
+      return;
+    }
+
+    player.lives--;
+    shake = 14;
+    explode(player.x, player.y, '#ffffff', 45, 260);
+    explode(player.x, player.y, '#4ecbff', 30);
+    sfx.hurt();
+
+    if (player.lives <= 0) {
+      gameOver();
+      return;
+    }
+    player.invuln = 2;
+    player.triple = 0;
+    player.rapid = 0;
+  }
+
+  function applyPowerup(p) {
+    const info = POWERUPS[p.type];
+    if (p.type === 'life') player.lives = Math.min(MAX_LIVES, player.lives + 1);
+    else player[p.type] = info.time;
+    addFloater(info.name, p.x, p.y, info.color);
+    sfx.power();
+  }
 })();
