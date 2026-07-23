@@ -482,4 +482,20 @@
     addFloater(info.name, p.x, p.y, info.color);
     sfx.power();
   }
+
+  // ---------------------------------------------------------------------------
+  // Effects
+  // ---------------------------------------------------------------------------
+  function explode(x, y, color, count, power = 180) {
+    for (let i = 0; i < count; i++) {
+      const a = rand(0, Math.PI * 2);
+      const s = rand(power * 0.2, power);
+      const life = rand(0.35, 0.9);
+      particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life, max: life, color, size: rand(1.5, 3.5) });
+    }
+  }
+
+  function addFloater(text, x, y, color) {
+    floaters.push({ text, x, y, color, life: 1 });
+  }
 })();
