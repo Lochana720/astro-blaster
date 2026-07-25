@@ -498,4 +498,168 @@
   function addFloater(text, x, y, color) {
     floaters.push({ text, x, y, color, life: 1 });
   }
+
+  // ---------------------------------------------------------------------------
+  // Update
+  // ---------------------------------------------------------------------------
+  function updateEnemy(e, dt) {
+    e.t += dt;
+    if (e.flash > 0) e.flash -= dt;
+
+    if (e.type === 'boss') {
+      if (e.y < 130) {
+        e.y += 70 * dt;
+      } else {
+        e.entering = false;
+        e.x = W / 2 + Math.sin(e.t * 0.7) * (W / 2 - 70);
+      }
+      if (!e.entering) {
+        e.fireCd -= dt;
+        if (e.fireCd <= 0) {
+          bossFire(e);
+          e.fireCd = Math.max(0.5, 1.4 - level * 0.03);
+        }
+      }
+      return;
+    }
+
+    e.y += e.speed * dt;
+    if (e.type === 'scout') e.x = e.baseX + Math.sin(e.t * 3 + e.phase) * 35;
+    else if (e.type === 'fighter') e.x = e.baseX + Math.sin(e.t * 1.5 + e.phase) * 80;
+    e.x = clamp(e.x, e.r, W - e.r);
+
+    if (e.fire > 0 && e.y > 0 && e.y < H * 0.7) {
+      e.fireCd -= dt;
+      if (e.fireCd <= 0) {
+        enemyShoot(e);
+        e.fireCd = rand(1.2, 2.6) / e.fire;
+      }
+    }
+
+    if (e.y > H + e.r) e.dead = true;
+  }
+
+  function updatePlayer(dt) {
+    if (pointer.active) {
+      // Follow the finger, slightly above it so the ship stays visible
+      const k = Math.min(1, dt * 12);
+      player.x += (pointer.x - player.x) * k;
+      player.y += (pointer.y - 70 - player.y) * k;
+    } else {
+      let dx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+      let dy = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+      if (dx && dy) {
+        dx *= Math.SQRT1_2;
+        dy *= Math.SQRT1_2;
+      }
+      player.x += dx * player.speed * dt;
+      player.y += dy * player.speed * dt;
+    }
+    player.x = clamp(player.x, player.r, W - player.r);
+    player.y = clamp(player.y, H * 0.45, H - 30);
+
+    player.cd -= dt;
+    player.invuln = Math.max(0, player.invuln - dt);
+    player.shield = Math.max(0, player.shield - dt);
+    player.triple = Math.max(0, player.triple - dt);
+    player.rapid = Math.max(0, player.rapid - dt);
+
+    if ((keys.fire || pointer.active) && player.cd <= 0) playerShoot();
+  }
+
+  function update(dt) {
+    const starSpeed = state === 'playing' ? 1 : 0.35;
+    for (const s of stars) {
+      s.y += s.v * dt * starSpeed;
+      if (s.y > H) {
+        s.y = 0;
+        s.x = rand(0, W);
+      }
+    }
+
+    // Effects keep animating on the game-over screen
+    for (const p of particles) {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+      p.life -= dt;
+    }
+    for (const f of floaters) {
+      f.y -= 40 * dt;
+      f.life -= dt;
+    }
+    particles = particles.filter((p) => p.life > 0);
+    floaters = floaters.filter((f) => f.life > 0);
+    if (shake > 0) shake = Math.max(0, shake - 40 * dt);
+
+    if (state !== 'playing') return;
+
+    updatePlayer(dt);
+
+    // Spawning
+    if (spawnLeft > 0) {
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) {
+        spawnEnemy();
+        spawnLeft--;
+        spawnTimer = Math.max(0.25, 1.1 - level * 0.06) * rand(0.6, 1.3);
+      }
+    }
+
+    for (const e of enemies) updateEnemy(e, dt);
+
+    for (const b of bullets) {
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      if (b.y < -20 || b.y > H + 20 || b.x < -20 || b.x > W + 20) b.dead = true;
+    }
+
+    for (const p of powerups) {
+      p.t += dt;
+      p.y += 100 * dt;
+      if (p.y > H + 20) p.dead = true;
+    }
+
+    // Collisions
+    for (const b of bullets) {
+      if (b.dead) continue;
+      if (b.enemy) {
+        if (hit(b, player)) {
+          b.dead = true;
+          hurtPlayer();
+        }
+      } else {
+        for (const e of enemies) {
+          if (!e.dead && hit(b, e)) {
+            b.dead = true;
+            damageEnemy(e, 1);
+            break;
+          }
+        }
+      }
+    }
+
+    for (const e of enemies) {
+      if (!e.dead && hit(e, player)) {
+        if (e.type !== 'boss') damageEnemy(e, 99);
+        hurtPlayer();
+      }
+    }
+
+    for (const p of powerups) {
+      if (!p.dead && hit(p, player)) {
+        p.dead = true;
+        applyPowerup(p);
+      }
+    }
+
+    bullets = bullets.filter((b) => !b.dead);
+    enemies = enemies.filter((e) => !e.dead);
+    powerups = powerups.filter((p) => !p.dead);
+
+    if (bannerTimer > 0) bannerTimer -= dt;
+
+    if (state === 'playing' && spawnLeft === 0 && enemies.length === 0) nextLevel();
+  }
 })();
